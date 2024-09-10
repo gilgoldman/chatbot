@@ -28,20 +28,44 @@ anthropic_client = Client(
 )
 
 # Setup Tavily as a search tool
-tavily_search_tool = TavilySearchAPIRetriever(k=3)  # Fetch up to 3 results
+tavily_search_tool = TavilySearchAPIRetriever(k=5)  # Fetch up to 5 results
 
 def agent_node(state):
     """Node for sending article to Claude for analysis."""
     article = state['article']
     
-    # Construct the prompt with the article
-    prompt = f"""Article: {article}
+    # Construct the system prompt
+    system_prompt = '''
+    You are an expert and diligent content editor with years of experience at leading news outlets.
+    You inspect every article that you review carefully and diligently, one paragraph at a time, and then as a whole.
+    You take your time to think through an article step by step before suggesting a correction. 
+    You have infinite patience and considerable attention to detail. No mistake gets past you.
+    '''
 
-Please analyze the article and provide a comprehensive summary. Include key points, main ideas, and any notable insights. If you need to search for additional context or information, please indicate so in your response."""
+
+    # Construct the prompt with the article
+    prompt = f"""
+    You are currently working at Singsaver, a financial product aggregator in Singapore.
+    Articles you write may have product placements such as credit cards, bank accounts, loan products, etc.
+    A new writer in your team submitted an article to review, and you heard from colleagues that the new writer tends to get the product details wrong.
+    Sometimes the new writer writes the wrong interest details, or the wrong miles, or even the an old card name - you caught them previously mentioning a product that was discontinued last year.
+    Review their new article below (marked by the <article></article> xml tags) diligently, taking care to go through your review process three times at least: 
+    1. Extract all the products mentioned in the article
+    2. List out to yourself all the details about those products one by one
+    3. Browse the internet to validate every detail about those products mentioned in the article
+    4. If the product is relevant and up to date move on. If there is a mistake, however, highlight it and return a short description of the correct product details
+    5. Review the article again, this time validating there are no mentions of Singsaver's competitors, such as MoneySmart
+
+    <article>
+    {article}
+    </article>
+    
+    """
 
     response = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=8192,
+        system=system_prompt,
         messages=[{"role": "user", "content": prompt}]
     )
     
