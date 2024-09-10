@@ -21,27 +21,27 @@ if not tavily_api_key or not claude_api_key:
     st.error("API keys for Tavily and Claude must be set in Streamlit secrets.")
     st.stop()
 
-# Initialize Claude (Anthropic) client
-anthropic_client = Client(api_key=claude_api_key)
+# Initialize Claude (Anthropic) client with additional header
+anthropic_client = Client(
+    api_key=claude_api_key,
+    default_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"}
+)
 
 # Setup Tavily as a search tool
 tavily_search_tool = TavilySearchAPIRetriever(k=3)  # Fetch up to 3 results
 
 def agent_node(state):
-    """Node for sending query to Claude using the messages API."""
-    messages = state['messages']
+    """Node for sending article to Claude for analysis."""
     article = state['article']
     
-    # Construct the prompt with the article and the user's query
+    # Construct the prompt with the article
     prompt = f"""Article: {article}
 
-User Query: {messages[-1].content}
-
-Please analyze the article and answer the user's query. If you need to search for additional information, please indicate so in your response."""
+Please analyze the article and provide a comprehensive summary. Include key points, main ideas, and any notable insights. If you need to search for additional context or information, please indicate so in your response."""
 
     response = anthropic_client.messages.create(
         model="claude-3-5-sonnet-20240620",
-        max_tokens=1000,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}]
     )
     
@@ -91,44 +91,38 @@ st.title("Article Analysis with LangGraph")
 
 # Article input
 st.subheader("Input Article")
-article = st.text_area("Paste your article here:", height=300)
-if st.button("Save Article"):
-    st.session_state.article = article
-    st.success("Article saved successfully!")
+article = st.text_area("Paste your article here:", height=400)
 
-# User query input
-st.subheader("Ask a Question")
-user_input = st.text_input("Enter your query about the article:")
-
-if st.button("Analyze"):
-    if st.session_state.article and user_input:
+if st.button("Analyze Article"):
+    if article:
+        st.session_state.article = article
         with st.spinner("Analyzing..."):
             inputs = {
-                "messages": [HumanMessage(content=user_input)],
+                "messages": [],  # No initial message needed
                 "article": st.session_state.article
             }
             result = app.invoke(inputs)
             
             # Display the results
             for message in result['messages']:
-                if message.type == "human":
-                    st.write(f"You: {message.content}")
-                elif message.type == "ai":
-                    st.write(f"AI: {message.content}")
+                if message.type == "ai":
+                    st.write("Analysis:")
+                    st.write(message.content)
                 elif message.type == "function":
-                    st.write(f"Search Results: {message.content}")
+                    st.write("Additional Information:")
+                    st.write(message.content)
                 
                 # Add to chat history
                 st.session_state.chat_history.append({"role": message.type, "content": message.content})
-    elif not st.session_state.article:
-        st.error("Please input an article first.")
     else:
-        st.error("Please enter a query.")
+        st.error("Please input an article first.")
 
-# Display chat history
+# Display analysis history
 st.subheader("Analysis History")
 for message in st.session_state.chat_history:
-    st.write(f"{message['role'].capitalize()}: {message.get('content', '')}")
+    st.write(f"{message['role'].capitalize()}:")
+    st.write(message.get('content', ''))
+    st.write("---")
 
 # Clear history button
 if st.button("Clear History"):
