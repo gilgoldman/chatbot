@@ -111,7 +111,7 @@ state_graph.add_edge("action", "agent")
 app = state_graph.compile()
 
 # Streamlit UI
-st.title("Article Analysis with LangGraph")
+st.title("Content Validator v0.1")
 
 # Article input
 st.subheader("Input Article")
