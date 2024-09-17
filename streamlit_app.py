@@ -28,7 +28,7 @@ anthropic_client = Client(
 )
 
 # Setup Tavily as a search tool
-tavily_search_tool = TavilySearchAPIRetriever(k=5)  # Fetch up to 5 results
+tavily_search_tool = TavilySearchAPIRetriever(k=5, api_key=st.secrets.get("TAVILY_KEY"))  # Fetch up to 5 results
 
 def agent_node(state):
     """Node for sending article to Claude for analysis."""
