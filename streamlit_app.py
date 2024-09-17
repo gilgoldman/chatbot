@@ -77,6 +77,8 @@ def tool_chain(user_input: str, config: RunnableConfig):
     <article>
     {user_input}
     </article>
+
+    Your output should always be in latex. As the parser on the other end reads latex, any use of "$" should be replaced with "\\$" to avoid breaking the presentation.
     """
     
     # Pass the dynamically generated user prompt into the input
