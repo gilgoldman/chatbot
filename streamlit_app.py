@@ -31,7 +31,7 @@ tool = TavilySearchResults(
 
 # Anthropic model setup with headers for the beta feature
 llm = ChatAnthropic(
-    api_key=claude_api_key,  # API key passed here
+    api_key=claude_api_key,
     model="claude-3-5-sonnet-20240620",
     default_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
 )
@@ -60,13 +60,23 @@ llm_chain = prompt | llm_with_tools
 # Adding explicit tool call check and logging/debugging info
 @chain
 def tool_chain(user_input: str, config: RunnableConfig):
-    # Log: Tool called
-    st.write("Tool called. Running Tavily search...")
-    
     # Dynamically create the user input part of the prompt (article content)
     USER_PROMPT = f"""
     Use the Tavily search tool to find the latest information to complete your task.
-    <article>{user_input}</article>
+    You are currently working at Singsaver, a financial product aggregator in Singapore.
+    Articles you write may have product placements such as credit cards, bank accounts, loan products, etc.
+    A new writer in your team submitted an article to review, and you heard from colleagues that the new writer tends to get the product details wrong.
+    Sometimes the new writer writes the wrong interest details, or the wrong miles, or even an old card name—you caught them previously mentioning a product that was discontinued last year.
+    Review their new article below (marked by the <article></article> XML tags) diligently, taking care to go through your review process three times at least: 
+    1. Extract all the products mentioned in the article.
+    2. List out to yourself all the details about those products one by one.
+    3. Browse the internet to validate every detail about those products mentioned in the article.
+    4. If the product is relevant and up to date, move on. If there is a mistake, however, highlight it and return a short description of the correct product details.
+    5. Review the article again, this time validating there are no mentions of Singsaver's competitors, such as MoneySmart.
+
+    <article>
+    {user_input}
+    </article>
     """
     
     # Pass the dynamically generated user prompt into the input
@@ -75,36 +85,13 @@ def tool_chain(user_input: str, config: RunnableConfig):
     # Initial invocation of the model with the prompt
     ai_msg = llm_chain.invoke(input_, config=config)
     
-    # Log: Check if tool_calls exist in the message
+    # Check if tool_calls exist in the message
     if ai_msg.tool_calls:
-        st.write("Tool call detected. Fetching search results...")
-        
-        # Process tool results and inspect structure of tool_msgs
         tool_msgs = tool.batch(ai_msg.tool_calls, config=config)
         
-        # Log the structure of tool_msgs
-        st.write("Tool message structure: ", tool_msgs)
-        
-        # Assuming `tool_msgs` has a `content` attribute or similar for URLs
-        # Modify according to actual structure
-        search_results = [msg.content['url'] for msg in tool_msgs if 'url' in msg.content]
-        
-        # Log: Show URLs searched
-        st.write("Search URLs returned by Tavily:")
-        for url in search_results:
-            st.write(f"- {url}")
-        
         # Re-invoke the chain with tool results
-        st.write("Data processed. Sending to Claude model for final output...")
-        final_output = llm_chain.invoke({**input_, "messages": [ai_msg, *tool_msgs]}, config=config)
-        
-        # Log: Output from the model
-        st.write("Model output received:")
-        st.write(final_output.content)
-        
-        return final_output
+        return llm_chain.invoke({**input_, "messages": [ai_msg, *tool_msgs]}, config=config)
     else:
-        st.write("No tool calls detected, returning Claude model response directly.")
         return ai_msg
 
 # Streamlit UI
