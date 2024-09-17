@@ -31,7 +31,7 @@ tool = TavilySearchResults(
 
 # Anthropic model setup with headers for the beta feature
 llm = ChatAnthropic(
-    api_key=claude_api_key,
+    api_key=claude_api_key,  # API key passed here
     model="claude-3-5-sonnet-20240620",
     default_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
 )
@@ -60,6 +60,9 @@ llm_chain = prompt | llm_with_tools
 # Adding explicit tool call check and logging/debugging info
 @chain
 def tool_chain(user_input: str, config: RunnableConfig):
+    # Log: Tool called
+    st.write("Tool called. Running Tavily search...")
+    
     # Dynamically create the user input part of the prompt (article content)
     USER_PROMPT = f"""
     Use the Tavily search tool to find the latest information to complete your task.
@@ -85,13 +88,30 @@ def tool_chain(user_input: str, config: RunnableConfig):
     # Initial invocation of the model with the prompt
     ai_msg = llm_chain.invoke(input_, config=config)
     
-    # Check if tool_calls exist in the message
+    # Log: Check if tool_calls exist in the message
     if ai_msg.tool_calls:
+        st.write("Tool call detected. Fetching search results...")
+        
+        # Process tool results and list URLs
         tool_msgs = tool.batch(ai_msg.tool_calls, config=config)
+        search_results = [result['url'] for result in tool_msgs]
+        
+        # Log: Show URLs searched
+        st.write("Search URLs returned by Tavily:")
+        for url in search_results:
+            st.write(f"- {url}")
         
         # Re-invoke the chain with tool results
-        return llm_chain.invoke({**input_, "messages": [ai_msg, *tool_msgs]}, config=config)
+        st.write("Data processed. Sending to Claude model for final output...")
+        final_output = llm_chain.invoke({**input_, "messages": [ai_msg, *tool_msgs]}, config=config)
+        
+        # Log: Output from the model
+        st.write("Model output received:")
+        st.write(final_output.content)
+        
+        return final_output
     else:
+        st.write("No tool calls detected, returning Claude model response directly.")
         return ai_msg
 
 # Streamlit UI
