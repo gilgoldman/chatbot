@@ -3,3 +3,4 @@ anthropic
 langgraph
 langchain-community
 langchain-core
+tavily-python
