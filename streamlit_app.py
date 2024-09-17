@@ -61,6 +61,8 @@ llm_chain = prompt | llm_with_tools
 @chain
 def tool_chain(user_input: str, config: RunnableConfig):
     # Dynamically create the user input part of the prompt (article content)
+    note = '''Your output should always be in markdown. Never use $ in your output, only "\\$'''
+
     USER_PROMPT = f"""
     Use the Tavily search tool to find the latest information to complete your task.
     You are currently working at Singsaver, a financial product aggregator in Singapore.
@@ -78,7 +80,7 @@ def tool_chain(user_input: str, config: RunnableConfig):
     {user_input}
     </article>
 
-    Your output should always be in markdown. As the parser on the other end reads latex, however, any use of "$" should be replaced with "\\$" to avoid breaking the presentation.
+    {note}
     """
     
     # Pass the dynamically generated user prompt into the input
