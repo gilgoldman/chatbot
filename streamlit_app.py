@@ -78,7 +78,7 @@ def tool_chain(user_input: str, config: RunnableConfig):
     {user_input}
     </article>
 
-    Your output should always be in latex. As the parser on the other end reads latex, any use of "$" should be replaced with "\\$" to avoid breaking the presentation.
+    Your output should always be in markdown. As the parser on the other end reads latex, however, any use of "$" should be replaced with "\\$" to avoid breaking the presentation.
     """
     
     # Pass the dynamically generated user prompt into the input
@@ -114,11 +114,11 @@ if st.button("Run Search"):
             
             # Display the result
             if isinstance(response, AIMessage):
-                st.write("Claude's Response:")
-                st.write(response.content)
+                st.markdown("Claude's Response:")
+                st.markdown(response.content)
             else:
-                st.write("Search Result:")
-                st.write(response.content)
+                st.markdown("Search Result:")
+                st.markdown(response.content)
             
             # Add to chat history
             st.session_state.chat_history.append({"role": "ai", "content": response.content})
