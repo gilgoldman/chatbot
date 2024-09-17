@@ -31,6 +31,7 @@ tool = TavilySearchResults(
 
 # Anthropic model setup with headers for the beta feature
 llm = ChatAnthropic(
+    api_key=claude_api_key,
     model="claude-3-5-sonnet-20240620",
     default_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
 )
