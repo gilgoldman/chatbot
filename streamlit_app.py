@@ -13,8 +13,8 @@ if 'article' not in st.session_state:
     st.session_state.article = ""
 
 # Set API keys securely using Streamlit secrets
-tavily_api_key = st.secrets["TAVILY_KEY"]
-claude_api_key = st.secrets["CLAUDE_KEY"]
+tavily_api_key = st.secrets["TAVILY_API_KEY"]
+claude_api_key = st.secrets["CLAUDE_API_KEY"]
 
 # Ensure API keys are provided
 if not tavily_api_key or not claude_api_key:
@@ -28,7 +28,7 @@ anthropic_client = Client(
 )
 
 # Setup Tavily as a search tool
-tavily_search_tool = TavilySearchAPIRetriever(k=5, api_key=st.secrets.get("TAVILY_KEY"))  # Fetch up to 5 results
+tavily_search_tool = TavilySearchAPIRetriever(k=5)  # Fetch up to 5 results
 
 def agent_node(state):
     """Node for sending article to Claude for analysis."""
