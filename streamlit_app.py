@@ -94,7 +94,7 @@ def tool_chain(user_input: str, config: RunnableConfig):
         return ai_msg
 
 # Streamlit UI
-st.title("Tavily + Claude Search Tool")
+st.title("Content Validator 0.2")
 
 # User input for search query
 st.subheader("Search Query")
